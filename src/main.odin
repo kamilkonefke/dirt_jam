@@ -11,7 +11,7 @@ import gl "vendor:OpenGL"
 WIDTH :: 1280
 HEIGHT :: 720
 
-terrain_length :: 100
+terrain_length :: 40
 terrain_half :: terrain_length/2
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
@@ -131,10 +131,9 @@ main :: proc() {
         sdl.GetWindowSize(window_handle, &width, &height)
 
         projection := glm.mat4Perspective(glm.radians_f32(60.0), f32(width)/f32(height), 0.01, 100.0)
-        camera_position := glm.vec3{10.0, 10.0, 10.0}
+        camera_position := glm.vec3{30.0, 20.0, 30.0}
         view := glm.mat4LookAt(camera_position, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0})
-        model_pos := glm.mat4Translate({0.0, 0.0, 0.0})
-        model := model_pos
+        model := glm.mat4Translate({0.0, 0.0, 0.0})
 
         gl.UniformMatrix4fv(uniforms["projection"].location, 1, false, &projection[0, 0])
         gl.UniformMatrix4fv(uniforms["view"].location, 1, false, &view[0, 0])
