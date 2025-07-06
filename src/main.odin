@@ -11,9 +11,8 @@ import gl "vendor:OpenGL"
 WIDTH :: 1280
 HEIGHT :: 720
 
-// fix: Segmentation fault when >50
-terrain_length :: 20
-terrain_half :: 10
+terrain_length :: 100
+terrain_half :: terrain_length/2
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
 
@@ -39,7 +38,7 @@ gen_terrain_data :: proc() {
         for z in 0..<terrain_length {
             xz: glm.vec2 = {f32(x - terrain_half), f32(z - terrain_half)}
             pos: glm.vec3 = {xz.x, 0, xz.y}
-            append_elems(&vertex_buffer, pos.x, pos.y, pos.z)
+            append(&vertex_buffer, pos.x, pos.y, pos.z)
         }
     }
 
@@ -50,7 +49,7 @@ gen_terrain_data :: proc() {
             v2 := v0 + terrain_length + 1
             v3 := v0 + 1
 
-            append_elems(&index_buffer, u32(v0), u32(v1), u32(v3), u32(v1), u32(v2), u32(v3))
+            append(&index_buffer, u32(v0), u32(v1), u32(v3), u32(v1), u32(v2), u32(v3))
         }
     }
 }
@@ -63,10 +62,10 @@ alloc_terrain_data :: proc() {
     gl.BindVertexArray(vao)
 
     gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-    gl.BufferData(gl.ARRAY_BUFFER, len(vertex_buffer) * size_of(vertex_buffer), raw_data(vertex_buffer), gl.STATIC_DRAW)
+    gl.BufferData(gl.ARRAY_BUFFER, len(vertex_buffer) * size_of(f32), raw_data(vertex_buffer), gl.STATIC_DRAW)
 
     gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
-    gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(index_buffer) * size_of(index_buffer), raw_data(index_buffer), gl.STATIC_DRAW)
+    gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(index_buffer) * size_of(u32), raw_data(index_buffer), gl.STATIC_DRAW)
 
     gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3 * size_of(f32), 0)
     gl.EnableVertexAttribArray(0)
