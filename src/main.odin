@@ -8,11 +8,16 @@ import glm "core:math/linalg/glsl"
 import sdl "vendor:sdl3"
 import gl "vendor:OpenGL"
 
+import im "../lib/odin-imgui"
+import im_sdl "../lib/odin-imgui/imgui_impl_sdl3"
+import im_gl "../lib/odin-imgui/imgui_impl_opengl3"
+
 WIDTH :: 1280
 HEIGHT :: 720
 
-terrain_length :: 40
+terrain_length :: 100
 terrain_half :: terrain_length/2
+terrain_scale :: 0.4
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
 
@@ -36,7 +41,7 @@ compile_shaders :: proc() {
 gen_terrain_data :: proc() {
     for x in 0..<terrain_length {
         for z in 0..<terrain_length {
-            xz: glm.vec2 = {f32(x - terrain_half), f32(z - terrain_half)}
+            xz: glm.vec2 = {f32(x - terrain_half), f32(z - terrain_half)} * terrain_scale
             pos: glm.vec3 = {xz.x, 0, xz.y}
             append(&vertex_buffer, pos.x, pos.y, pos.z)
         }
@@ -94,10 +99,14 @@ main :: proc() {
     compile_shaders()
     gl.UseProgram(shader)
 
+    setup_imgui()
+
     gl.Enable(gl.DEPTH_TEST)
     for is_running {
         // -_-
         for sdl.PollEvent(&event) {
+            im_sdl.process_event(&event)
+            
             if event.type == sdl.EventType.QUIT {
                 is_running = false
             }
@@ -130,7 +139,7 @@ main :: proc() {
         width, height: i32
         sdl.GetWindowSize(window_handle, &width, &height)
 
-        projection := glm.mat4Perspective(glm.radians_f32(60.0), f32(width)/f32(height), 0.01, 100.0)
+        projection := glm.mat4Perspective(glm.radians_f32(60.0), f32(width)/f32(height), 0.01, 1000.0)
         camera_position := glm.vec3{30.0, 20.0, 30.0}
         view := glm.mat4LookAt(camera_position, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0})
         model := glm.mat4Translate({0.0, 0.0, 0.0})
@@ -143,6 +152,8 @@ main :: proc() {
         gl.BindVertexArray(vao)
         gl.DrawElements(gl.TRIANGLES, i32(len(index_buffer)), gl.UNSIGNED_INT, nil)
 
+        update_imgui()
+
         sdl.GL_SwapWindow(window_handle)
     }
 
@@ -153,6 +164,8 @@ main :: proc() {
 
     delete(vertex_buffer)
     delete(index_buffer)
+
+    free_imgui()
 
     sdl.DestroyWindow(window_handle)
     sdl.GL_DestroyContext(window_ctx)
