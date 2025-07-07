@@ -15,11 +15,15 @@ import im_gl "../lib/odin-imgui/imgui_impl_opengl3"
 WIDTH :: 1280
 HEIGHT :: 720
 
-terrain_length :: 100
-terrain_half :: terrain_length/2
-terrain_scale :: 0.4
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
+
+terrain_length :: 200
+terrain_half :: terrain_length/2
+terrain_scale :: 0.2
+
+noise_frequency: f32 = 1.0;
+noise_amplitude: f32 = 1.0;
 
 window_handle: ^sdl.Window
 window_ctx: sdl.GLContext
@@ -147,6 +151,9 @@ main :: proc() {
         gl.UniformMatrix4fv(uniforms["projection"].location, 1, false, &projection[0, 0])
         gl.UniformMatrix4fv(uniforms["view"].location, 1, false, &view[0, 0])
         gl.UniformMatrix4fv(uniforms["model"].location, 1, false, &model[0, 0])
+
+        gl.Uniform1f(uniforms["noise_frequency"].location, noise_frequency)
+        gl.Uniform1f(uniforms["noise_amplitude"].location, noise_amplitude)
 
         gl.UseProgram(shader)
         gl.BindVertexArray(vao)

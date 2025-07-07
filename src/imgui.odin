@@ -22,9 +22,13 @@ update_imgui :: proc() {
     im.new_frame()
 
     if im.begin("Tools") {
-        if im.button("EXIT") {
-            is_running = false
+        if im.button("RECOMPILE SHADERS") {
+            compile_shaders()
         }
+
+        im.label_text("", "Noise Settings")
+        im.slider_float("Frequency", &noise_frequency, 0.0, 4.0)
+        im.slider_float("Amplitude", &noise_amplitude, 0.0, 4.0)
     }
 
     im.end()
