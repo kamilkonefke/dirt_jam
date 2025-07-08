@@ -22,8 +22,10 @@ terrain_length :: 200
 terrain_half :: terrain_length/2
 terrain_scale :: 0.2
 
-noise_frequency: f32 = 1.0;
-noise_amplitude: f32 = 1.0;
+albedo: glm.vec4 = {0.329, 0.505, 0.412, 1.0};
+ambient: glm.vec4 = {0.25, 0.25, 0.25, 1.0};
+noise_frequency: f32 = 0.146;
+noise_amplitude: f32 = 5.322;
 
 window_handle: ^sdl.Window
 window_ctx: sdl.GLContext
@@ -139,7 +141,7 @@ main :: proc() {
         }
 
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+        gl.ClearColor(0.659, 0.647, 0.714, 1.0)
 
         width, height: i32
         sdl.GetWindowSize(window_handle, &width, &height)
@@ -153,6 +155,8 @@ main :: proc() {
         gl.UniformMatrix4fv(uniforms["view"].location, 1, false, &view[0, 0])
         gl.UniformMatrix4fv(uniforms["model"].location, 1, false, &model[0, 0])
 
+        gl.Uniform4fv(uniforms["albedo_color"].location, 1, &albedo[0])
+        gl.Uniform4fv(uniforms["ambient_color"].location, 1, &ambient[0])
         gl.Uniform1f(uniforms["noise_frequency"].location, noise_frequency)
         gl.Uniform1f(uniforms["noise_amplitude"].location, noise_amplitude)
 

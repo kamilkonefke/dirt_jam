@@ -3,6 +3,8 @@
 out vec4 frag_color;
 in vec3 pos;
 
+uniform vec4 albedo_color = vec4(0.106, 0.6, 0.545, 1.0);
+uniform vec4 ambient_color = vec4(0.7, 0.7, 0.7, 1.0);
 uniform float noise_frequency = 1.0;
 uniform float noise_amplitude = 1.0;
 
@@ -67,11 +69,10 @@ void main() {
 
     vec3 normal = normalize(vec3(-noise.y, 1.0, -noise.z));
 
-    vec4 albedo = vec4(0.357, 0.624, 0.408, 1.0);
     float diffiuse = clamp(dot(vec3(0.0, 1.0, 2.0), normal), 0.0, 1.0);
 
-    vec4 direct = albedo * diffiuse;
-    vec4 ambient = albedo * vec4(0.5, 0.5, 0.5, 1.0);
+    vec4 direct = albedo_color * diffiuse;
+    vec4 ambient = albedo_color * ambient_color;
 
     vec4 lit = clamp(direct + ambient, vec4(0.0), vec4(1.0));
 
