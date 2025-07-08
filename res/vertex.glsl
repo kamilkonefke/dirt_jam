@@ -2,12 +2,13 @@
 
 layout(location = 0) in vec3 a_pos;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
-
-uniform float noise_frequency = 1.0;
-uniform float noise_amplitude = 1.0;
+layout(std140) uniform ubo {
+    mat4 u_mvp;
+    vec4 u_albedo;
+    vec4 u_ambient;
+    float u_frequency;
+    float u_amplitude;
+};
 
 out vec3 pos;
 
@@ -69,6 +70,6 @@ vec3 perlin(vec2 pos) {
 
 void main() {
     pos = a_pos;
-    gl_Position = projection * view * model * vec4(a_pos, 1.0);
-    gl_Position.y += perlin(a_pos.xz * noise_frequency).x * noise_amplitude;
+    gl_Position = u_mvp * vec4(a_pos, 1.0);
+    gl_Position.y += perlin(a_pos.xz * u_frequency).x * u_amplitude;
 }

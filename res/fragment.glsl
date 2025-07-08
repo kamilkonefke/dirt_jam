@@ -1,12 +1,16 @@
 #version 330 core
 
-out vec4 frag_color;
-in vec3 pos;
+layout(location = 0) out vec4 frag_color;
 
-uniform vec4 albedo_color = vec4(0.106, 0.6, 0.545, 1.0);
-uniform vec4 ambient_color = vec4(0.7, 0.7, 0.7, 1.0);
-uniform float noise_frequency = 1.0;
-uniform float noise_amplitude = 1.0;
+layout(std140) uniform ubo {
+    mat4 u_mvp;
+    vec4 u_albedo;
+    vec4 u_ambient;
+    float u_frequency;
+    float u_amplitude;
+};
+
+in vec3 pos;
 
 float pseudo(vec2 s) {
     vec2 k = vec2(54.562346, 42.6525);
@@ -65,14 +69,14 @@ vec3 perlin(vec2 pos) {
 }
 
 void main() {
-    vec3 noise = perlin(pos.xz * noise_frequency) * noise_amplitude;
+    vec3 noise = perlin(pos.xz * u_frequency) * u_amplitude;
 
     vec3 normal = normalize(vec3(-noise.y, 1.0, -noise.z));
 
     float diffiuse = clamp(dot(vec3(0.0, 1.0, 2.0), normal), 0.0, 1.0);
 
-    vec4 direct = albedo_color * diffiuse;
-    vec4 ambient = albedo_color * ambient_color;
+    vec4 direct = u_albedo * diffiuse;
+    vec4 ambient = u_albedo * u_ambient;
 
     vec4 lit = clamp(direct + ambient, vec4(0.0), vec4(1.0));
 

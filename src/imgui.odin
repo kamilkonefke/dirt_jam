@@ -34,11 +34,11 @@ update_imgui :: proc() {
         im.separator()
 
         im.label_text("", "Noise Settings")
-        im.slider_float("Frequency", &noise_frequency, 0.0, 2.0)
-        im.slider_float("Amplitude", &noise_amplitude, 0.0, 20.0)
+        im.slider_float("Frequency", &u_frequency, 0.0, 2.0)
+        im.slider_float("Amplitude", &u_amplitude, 0.0, 20.0)
 
-        im.color_edit4("Albedo", &albedo, { .No_Alpha, .Display_Hex })
-        im.color_edit4("Ambient", &ambient, { .No_Alpha, .Display_Hex})
+        im.color_edit4("Albedo", &u_albedo, { .No_Alpha, .Display_Hex })
+        im.color_edit4("Ambient", &u_ambient, { .No_Alpha, .Display_Hex})
     }
 
     im.end()
