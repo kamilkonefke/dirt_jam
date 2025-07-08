@@ -40,6 +40,7 @@ ebo: u32
 compile_shaders :: proc() {
     shader, _ = gl.load_shaders("res/vertex.glsl", "res/fragment.glsl")
     uniforms = gl.get_uniforms_from_program(shader)
+    // todo: make UBO
 }
 
 gen_terrain_data :: proc() {

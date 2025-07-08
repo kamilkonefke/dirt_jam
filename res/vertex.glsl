@@ -9,6 +9,8 @@ uniform mat4 model;
 uniform float noise_frequency = 1.0;
 uniform float noise_amplitude = 1.0;
 
+out vec3 pos;
+
 float pseudo(vec2 s) {
     vec2 k = vec2(54.562346, 42.6525);
     return fract(sin(dot(mod(s, 256.0), k)) * 51.5266);
@@ -23,7 +25,11 @@ vec2 quintic_interpolation(vec2 t) {
 	return t * t * t * (t * (t * vec2(6) - vec2(15)) + vec2(10));
 }
 
-float perlin(vec2 pos) {
+vec2 quintic_derivative(vec2 t) {
+    return vec2(30) * t * t * (t * (t - vec2(2)) + vec2(1));
+}
+
+vec3 perlin(vec2 pos) {
     vec2 min = floor(pos);
     vec2 max = ceil(pos);
 
@@ -53,13 +59,16 @@ float perlin(vec2 pos) {
     float d = dot(gtr, ptr);
 
     vec2 u = quintic_interpolation(remainder);
+    vec2 du = quintic_derivative(remainder);
 
     float noise = a + u.x * (b - a) + u.y * (c - a) + u.x * u.y * (a - b - c + d);
+    vec2 gradient = gbl + u.x * (gbr - gbl) + u.y * (gbr - gbl) + u.x * u.y * (gbl - gtl - gbr + gtr) + du * (u.yx * (a - b - c + d) + vec2(b, c) - a);
 
-    return noise;
+    return vec3(noise, gradient);
 }
 
 void main() {
+    pos = a_pos;
     gl_Position = projection * view * model * vec4(a_pos, 1.0);
-    gl_Position.y += perlin(a_pos.xz * noise_frequency) * noise_amplitude;
+    gl_Position.y += perlin(a_pos.xz * noise_frequency).x * noise_amplitude;
 }

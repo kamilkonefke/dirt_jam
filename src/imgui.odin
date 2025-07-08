@@ -26,9 +26,11 @@ update_imgui :: proc() {
             compile_shaders()
         }
 
+        im.text("R - recompile shaders")
+        im.text("W - toggle wireframe")
         im.label_text("", "Noise Settings")
-        im.slider_float("Frequency", &noise_frequency, 0.0, 4.0)
-        im.slider_float("Amplitude", &noise_amplitude, 0.0, 4.0)
+        im.slider_float("Frequency", &noise_frequency, 0.0, 2.0)
+        im.slider_float("Amplitude", &noise_amplitude, 0.0, 20.0)
     }
 
     im.end()
