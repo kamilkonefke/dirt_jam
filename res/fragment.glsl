@@ -4,8 +4,11 @@ layout(location = 0) out vec4 frag_color;
 
 layout(std140) uniform ubo {
     mat4 u_mvp;
-    vec4 u_albedo;
+    vec4 u_high_slope_color;
+    vec4 u_low_slope_color;
     vec4 u_ambient;
+    vec2 u_slope_range;
+    float u_slope_damping;
     float u_frequency;
     float u_amplitude;
     float u_lacunarity;
@@ -105,11 +108,16 @@ void main() {
     vec3 noise = fbm(pos.xz * u_frequency);
 
     vec3 normal = normalize(vec3(-noise.y, 1.0, -noise.z));
+    vec3 slope_normal = normalize(vec3(-noise.y, 1.0, -noise.z) * vec3(u_slope_damping, 1, u_slope_damping));
+
+    float blend_factor = smoothstep(u_slope_range.x, u_slope_range.y, 1.0 - slope_normal.y);
+
+    vec4 albedo = mix(u_low_slope_color, u_high_slope_color, blend_factor);
 
     float diffiuse = clamp(dot(vec3(0.5, 0.0, 1.0), normal), 0.0, 1.0);
 
-    vec4 direct = u_albedo * diffiuse;
-    vec4 ambient = u_albedo * u_ambient;
+    vec4 direct = albedo * diffiuse;
+    vec4 ambient = albedo * u_ambient;
 
     vec4 lit = clamp(direct + ambient, vec4(0.0), vec4(1.0));
 

@@ -4,8 +4,11 @@ layout(location = 0) in vec3 a_pos;
 
 layout(std140) uniform ubo {
     mat4 u_mvp;
-    vec4 u_albedo;
+    vec4 u_high_slope_color;
+    vec4 u_low_slope_color;
     vec4 u_ambient;
+    vec2 u_slope_range;
+    float u_slope_damping;
     float u_frequency;
     float u_amplitude;
     float u_lacunarity;
