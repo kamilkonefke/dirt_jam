@@ -121,5 +121,5 @@ void main() {
 
     vec4 lit = clamp(direct + ambient, vec4(0.0), vec4(1.0));
 
-    frag_color = pow(lit, vec4(2.2));
+    frag_color = lit;
 }
