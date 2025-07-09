@@ -31,15 +31,17 @@ ebo: u32
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
 
-terrain_length :: 200
+terrain_length :: 400
 terrain_half :: terrain_length/2
-terrain_scale :: 0.2
+terrain_scale :: 1
 
 u_mvp: glm.mat4
 u_albedo: glm.vec4 = {0.329, 0.505, 0.412, 1.0};
 u_ambient: glm.vec4 = {0.25, 0.25, 0.25, 1.0};
-u_frequency: f32 = 0.146;
-u_amplitude: f32 = 5.322;
+u_frequency: f32 = 0.034;
+u_amplitude: f32 = 11.336;
+u_lacunarity: f32 = 3.4;
+u_octaves: i32 = 32;
 
 compile_shaders :: proc() {
     shader, _ = gl.load_shaders("res/vertex.glsl", "res/fragment.glsl")
@@ -48,7 +50,7 @@ compile_shaders :: proc() {
 create_ubo :: proc() {
     gl.GenBuffers(1, &ubo)
     gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
-    gl.BufferData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2 + size_of(f32) * 2, nil, gl.STATIC_DRAW)
+    gl.BufferData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2 + size_of(f32) * 3 + size_of(i32), nil, gl.STATIC_DRAW)
     gl.BindBuffer(gl.UNIFORM_BUFFER, 0)
 }
 
@@ -59,6 +61,8 @@ update_ubo :: proc() {
     gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4), size_of(glm.vec4), &u_ambient[0])
     gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2, size_of(f32), &u_frequency)
     gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2 + size_of(f32), size_of(f32), &u_amplitude)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2 + size_of(f32) * 2, size_of(f32), &u_lacunarity)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2 + size_of(f32) * 3, size_of(i32), &u_octaves)
     gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, ubo)
 }
 
@@ -118,10 +122,10 @@ main :: proc() {
     sdl.GL_SetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
     sdl.GL_SetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 3)
     sdl.GL_SetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, cast(i32)sdl.GL_CONTEXT_PROFILE_CORE)
-    sdl.GL_SetSwapInterval(1)
 
     window_handle = sdl.CreateWindow("Dirt Jam", 1280, 720, sdl.WINDOW_OPENGL)
     window_ctx = sdl.GL_CreateContext(window_handle)
+    sdl.GL_SetSwapInterval(1)
 
     sdl.GL_MakeCurrent(window_handle, window_ctx)
     gl.load_up_to(3, 3, sdl.gl_set_proc_address)

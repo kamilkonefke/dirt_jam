@@ -8,6 +8,8 @@ layout(std140) uniform ubo {
     vec4 u_ambient;
     float u_frequency;
     float u_amplitude;
+    float u_lacunarity;
+    int u_octaves;
 };
 
 in vec3 pos;
@@ -17,9 +19,11 @@ float pseudo(vec2 s) {
     return fract(sin(dot(mod(s, 256.0), k)) * 51.5266);
 }
 
+#define PI 3.141592653589793238462
 vec2 rand_gradient(float seed) {
-    float angle = seed * 61.2453;
-    return vec2(cos(angle), sin(angle));
+    float theta = seed * 360 * 2 - 360;
+    theta = theta * PI / 180.0;
+    return normalize(vec2(cos(theta), sin(theta)));
 }
 
 vec2 quintic_interpolation(vec2 t) {
@@ -68,12 +72,41 @@ vec3 perlin(vec2 pos) {
     return vec3(noise, gradient);
 }
 
+vec3 fbm(in vec2 p) {
+    float lacunarity = u_lacunarity;
+    float amplitude = u_amplitude;
+
+    float height = 0.0;
+    vec2 gradient = vec2(0.0);
+
+    mat2 m = mat2(1.0, 0.0, 0.0, 1.0);
+
+    mat2 m2 = mat2(cos(0.5), -sin(0.5),
+                    sin(0.5), cos(0.50));
+
+    mat2 m2i = inverse(m2);
+
+    for(int i = 0; i < u_octaves; i++) {
+        vec3 noise = perlin(p);
+
+        height += amplitude * noise.x;
+        gradient += amplitude * m * noise.yz;
+
+        amplitude *= 0.2;
+
+        p = lacunarity * m2 * p;
+        m = lacunarity * m2i * m;
+    }
+
+    return vec3(height, gradient);
+}
+
 void main() {
-    vec3 noise = perlin(pos.xz * u_frequency) * u_amplitude;
+    vec3 noise = fbm(pos.xz * u_frequency);
 
     vec3 normal = normalize(vec3(-noise.y, 1.0, -noise.z));
 
-    float diffiuse = clamp(dot(vec3(0.0, 1.0, 2.0), normal), 0.0, 1.0);
+    float diffiuse = clamp(dot(vec3(0.5, 0.0, 1.0), normal), 0.0, 1.0);
 
     vec4 direct = u_albedo * diffiuse;
     vec4 ambient = u_albedo * u_ambient;
