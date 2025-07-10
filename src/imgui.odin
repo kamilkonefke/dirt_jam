@@ -39,7 +39,7 @@ update_imgui :: proc() {
         im.drag_float2("Frequency variance", &u_frequency_variance, 0.01)
         im.slider_float("Amplitude", &u_amplitude, 0.001, 500.0)
         im.slider_float("Lacunarity", &u_lacunarity, 0.001, 4.0)
-        im.slider_int("Octaves", &u_octaves, 1, 32)
+        im.slider_int("Octaves", &u_octaves, 1, 8)
 
         im.separator()
 
