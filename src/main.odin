@@ -31,21 +31,24 @@ ebo: u32
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
 
-terrain_length :: 400
+terrain_length :: 500
 terrain_half :: terrain_length/2
-terrain_scale :: 1
+terrain_scale :: 2.0
 
 u_mvp: glm.mat4
 
-u_high_slope_color: glm.vec4 = {0.573, 0.573, 0.573, 1.0}
-u_low_slope_color: glm.vec4 = {0.0, 0.0, 0.0, 1.0}
-u_slope_range: glm.vec2 = {-0.070, 0.16}
-u_slope_damping: f32 = 0.01
-u_ambient: glm.vec4 = {0.718, 0.718, 0.718, 1.0}
+u_seed: f32 = 4325.00;
 
-u_frequency: f32 = 0.01
-u_amplitude: f32 = 50.00
-u_lacunarity: f32 = 3.4
+u_high_slope_color: glm.vec4 = {0.219, 0.221, 0.199, 1.0}
+u_low_slope_color: glm.vec4 = {0.307, 0.402, 0.262, 1.0}
+u_slope_range: glm.vec2 = {0.740, 0.780}
+u_slope_damping: f32 = 0.045
+u_ambient: glm.vec4 = {0.838, 0.838, 0.838, 1.0}
+
+u_frequency: f32 = 0.012
+u_frequency_variance: glm.vec2 = {-0.35, 0.22}
+u_amplitude: f32 = 100.0
+u_lacunarity: f32 = 3.79
 u_octaves: i32 = 8
 
 compile_shaders :: proc() {
@@ -55,7 +58,7 @@ compile_shaders :: proc() {
 create_ubo :: proc() {
     gl.GenBuffers(1, &ubo)
     gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
-    gl.BufferData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 4 + size_of(f32) * 4 + size_of(i32), nil, gl.STATIC_DRAW)
+    gl.BufferData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 5 + size_of(i32), nil, gl.STATIC_DRAW)
     gl.BindBuffer(gl.UNIFORM_BUFFER, 0)
 }
 
@@ -66,11 +69,13 @@ update_ubo :: proc() {
     gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4), size_of(glm.vec4), &u_low_slope_color[0])
     gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2, size_of(glm.vec4), &u_ambient[0])
     gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3, size_of(glm.vec2), &u_slope_range[0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2), size_of(f32), &u_slope_damping)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) + size_of(f32), size_of(f32) * 2, &u_frequency)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) + size_of(f32) * 2, size_of(f32), &u_amplitude)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) + size_of(f32) * 3, size_of(f32), &u_lacunarity)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) + size_of(f32) * 4, size_of(i32), &u_octaves)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2), size_of(glm.vec2), &u_frequency_variance[0])
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2, size_of(f32), &u_slope_damping)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32), size_of(f32) * 2, &u_frequency)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 2, size_of(f32), &u_amplitude)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 3, size_of(f32), &u_lacunarity)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 4, size_of(f32), &u_seed)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 5, size_of(i32), &u_octaves)
     gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, ubo)
 }
 

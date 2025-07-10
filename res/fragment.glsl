@@ -8,18 +8,24 @@ layout(std140) uniform ubo {
     vec4 u_low_slope_color;
     vec4 u_ambient;
     vec2 u_slope_range;
+    vec2 u_frequency_variance;
     float u_slope_damping;
     float u_frequency;
     float u_amplitude;
     float u_lacunarity;
+    float u_seed;
     int u_octaves;
 };
 
 in vec3 pos;
 
-float pseudo(vec2 s) {
-    vec2 k = vec2(54.562346, 42.6525);
-    return fract(sin(dot(mod(s, 256.0), k)) * 51.5266);
+float pseudo(vec2 v) {
+    v = fract(v/128.)*128. + vec2(-64.340622, -72.465622);
+    return fract(dot(v.xyx * v.xyy, vec3(20.390625, 60.703125, 2.4281209)));
+}
+
+float hash_pos(vec2 pos) {
+    return pseudo(pos * vec2(u_seed, u_seed + 4));
 }
 
 #define PI 3.141592653589793238462
@@ -48,10 +54,10 @@ vec3 perlin(vec2 pos) {
     vec2 c01 = vec2(min.x, max.y);
     vec2 c11 = max;
 
-    vec2 g00 = rand_gradient(pseudo(c00));
-    vec2 g10 = rand_gradient(pseudo(c10));
-    vec2 g01 = rand_gradient(pseudo(c01));
-    vec2 g11 = rand_gradient(pseudo(c11));
+    vec2 g00 = rand_gradient(hash_pos(c00));
+    vec2 g10 = rand_gradient(hash_pos(c10));
+    vec2 g01 = rand_gradient(hash_pos(c01));
+    vec2 g11 = rand_gradient(hash_pos(c11));
 
     vec2 p0 = remainder;
     vec2 p1 = p0 - vec2(1.0);
@@ -97,8 +103,10 @@ vec3 fbm(in vec2 p) {
 
         amplitude *= 0.2;
 
-        p = lacunarity * m2 * p;
-        m = lacunarity * m2i * m;
+        float frequency_variance = mix(u_frequency_variance.x, u_frequency_variance.y, hash_pos(vec2(i * 422, u_seed)));
+
+        p = (lacunarity + frequency_variance) * m2 * p;
+        m = (lacunarity + frequency_variance) * m2i * m;
     }
 
     return vec3(height, gradient);

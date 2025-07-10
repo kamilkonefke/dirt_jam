@@ -8,18 +8,20 @@ layout(std140) uniform ubo {
     vec4 u_low_slope_color;
     vec4 u_ambient;
     vec2 u_slope_range;
+    vec2 u_frequency_variance;
     float u_slope_damping;
     float u_frequency;
     float u_amplitude;
     float u_lacunarity;
+    float u_seed;
     int u_octaves;
 };
 
 out vec3 pos;
 
-float pseudo(vec2 s) {
-    vec2 k = vec2(54.562346, 42.6525);
-    return fract(sin(dot(mod(s, 256.0), k)) * 51.5266);
+float pseudo(vec2 v) {
+    v = fract(v/128.)*128. + vec2(-64.340622, -72.465622);
+    return fract(dot(v.xyx * v.xyy, vec3(20.390625, 60.703125, 2.4281209)));
 }
 
 #define PI 3.141592653589793238462
@@ -27,6 +29,10 @@ vec2 rand_gradient(float seed) {
     float theta = seed * 360 * 2 - 360;
     theta = theta * PI / 180.0;
     return normalize(vec2(cos(theta), sin(theta)));
+}
+
+float hash_pos(vec2 pos) {
+    return pseudo(pos * vec2(u_seed, u_seed + 4));
 }
 
 vec2 quintic_interpolation(vec2 t) {
@@ -48,10 +54,10 @@ vec3 perlin(vec2 pos) {
     vec2 tl = vec2(min.x, max.y);
     vec2 tr = max;
 
-    vec2 gbl = rand_gradient(pseudo(bl));
-    vec2 gbr = rand_gradient(pseudo(br));
-    vec2 gtl = rand_gradient(pseudo(tl));
-    vec2 gtr = rand_gradient(pseudo(tr));
+    vec2 gbl = rand_gradient(hash_pos(bl));
+    vec2 gbr = rand_gradient(hash_pos(br));
+    vec2 gtl = rand_gradient(hash_pos(tl));
+    vec2 gtr = rand_gradient(hash_pos(tr));
 
     vec2 p0 = remainder;
     vec2 p1 = p0 - vec2(1.0);
@@ -97,13 +103,14 @@ vec3 fbm(in vec2 p) {
 
         amplitude *= 0.2;
 
-        p = lacunarity * m2 * p;
-        m = lacunarity * m2i * m;
+        float frequency_variance = mix(u_frequency_variance.x, u_frequency_variance.y, hash_pos(vec2(i * 422, u_seed)));
+
+        p = (lacunarity + frequency_variance) * m2 * p;
+        m = (lacunarity + frequency_variance) * m2i * m;
     }
 
     return vec3(height, gradient);
 }
-
 void main() {
     pos = a_pos;
     gl_Position = u_mvp * vec4(a_pos, 1.0);

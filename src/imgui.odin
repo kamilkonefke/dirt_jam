@@ -33,18 +33,25 @@ update_imgui :: proc() {
 
         im.separator()
 
-        im.label_text("", "Noise Settings")
+        im.text("Noise")
+        im.drag_float("Seed", &u_seed)
         im.slider_float("Frequency", &u_frequency, 0.001, 0.6)
-        im.slider_float("Amplitude", &u_amplitude, 0.001, 50.0)
+        im.drag_float2("Frequency variance", &u_frequency_variance, 0.01)
+        im.slider_float("Amplitude", &u_amplitude, 0.001, 500.0)
         im.slider_float("Lacunarity", &u_lacunarity, 0.001, 4.0)
         im.slider_int("Octaves", &u_octaves, 1, 32)
+
+        im.separator()
+
+        im.text("Colors!")
+        im.color_edit4("High Slope Color", &u_high_slope_color, { .No_Alpha, .Display_Hex })
+        im.color_edit4("Low Slope Color", &u_low_slope_color, { .No_Alpha, .Display_Hex })
+        im.color_edit4("Ambient", &u_ambient, { .No_Alpha, .Display_Hex})
 
         im.drag_float2("Slope range", &u_slope_range, 0.01)
         im.slider_float("Slope damping", &u_slope_damping, 0.0, 1.0)
 
-        im.color_edit4("High Slope Color", &u_high_slope_color, { .No_Alpha, .Display_Hex })
-        im.color_edit4("Low Slope Color", &u_low_slope_color, { .No_Alpha, .Display_Hex })
-        im.color_edit4("Ambient", &u_ambient, { .No_Alpha, .Display_Hex})
+        im.separator()
     }
 
     im.end()
