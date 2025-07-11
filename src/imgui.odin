@@ -34,25 +34,30 @@ update_imgui :: proc() {
         im.separator()
 
         im.text("Noise")
-        im.drag_float("Seed", &u_seed)
-        im.slider_float("Frequency", &u_frequency, 0.001, 0.6)
-        im.drag_float2("Frequency variance", &u_frequency_variance, 0.01)
-        im.slider_float("Amplitude", &u_amplitude, 0.001, 500.0)
-        im.slider_float("Lacunarity", &u_lacunarity, 0.001, 4.0)
-        im.slider_int("Octaves", &u_octaves, 1, 8)
+        im.drag_float("Seed", &ubo_data.seed)
+        im.slider_float("Frequency", &ubo_data.frequency, 0.001, 0.6)
+        im.drag_float2("Frequency variance", &ubo_data.frequency_variance, 0.01)
+        im.slider_float("Amplitude", &ubo_data.amplitude, 0.001, 500.0)
+        im.slider_float("Lacunarity", &ubo_data.lacunarity, 0.001, 4.0)
+        im.slider_int("Octaves", &ubo_data.octaves, 1, 8)
 
         im.separator()
 
-        im.text("Colors!")
-        im.color_edit4("High Slope Color", &u_high_slope_color, { .No_Alpha, .Display_Hex })
-        im.color_edit4("Low Slope Color", &u_low_slope_color, { .No_Alpha, .Display_Hex })
-        im.color_edit4("Ambient", &u_ambient, { .No_Alpha, .Display_Hex})
+        im.text("Colors")
+        im.color_edit4("High Slope", &ubo_data.high_slope_color, { .No_Alpha, .Display_Hex })
+        im.color_edit4("Low Slope", &ubo_data.low_slope_color, { .No_Alpha, .Display_Hex })
+        im.color_edit4("Ambient", &ubo_data.ambient, { .No_Alpha, .Display_Hex})
 
-        im.drag_float2("Slope range", &u_slope_range, 0.01)
-        im.slider_float("Slope damping", &u_slope_damping, 0.0, 1.0)
+        im.drag_float2("Slope range", &ubo_data.slope_range, 0.01)
+        im.slider_float("Slope damping", &ubo_data.slope_damping, 0.0, 1.0)
 
         im.separator()
+        im.text("Fog")
+        im.color_edit4("Color", &ubo_data.fog_color, { .No_Alpha, .Display_Hex })
+        im.drag_float("Density", &ubo_data.fog_density, 0.0001, 0.0, 0.1)
     }
+
+    im.show_metrics_window()
 
     im.end()
     im.render()

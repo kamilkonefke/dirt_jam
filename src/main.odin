@@ -31,25 +31,49 @@ ebo: u32
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
 
-terrain_length :: 500
+terrain_length :: 600
 terrain_half :: terrain_length/2
-terrain_scale :: 2.0
+terrain_scale :: 1.6
 
-u_mvp: glm.mat4
+// If something is fucked up then look here. I don't fully understand std140
+ubo_layout :: struct {
+    mvp: glm.mat4,
+    world_matrix: glm.mat4,
+    high_slope_color: glm.vec4,
+    low_slope_color: glm.vec4,
+    ambient: glm.vec4,
+    fog_color: glm.vec4,
+    camera_pos: glm.vec3,
+    _pad0: f32,
+    frequency_variance: glm.vec2,
+    slope_range: glm.vec2,
+    slope_damping: f32,
+    frequency: f32,
+    amplitude: f32,
+    lacunarity: f32,
+    seed: f32,
+    fog_density: f32,
+    octaves: i32,
+}
 
-u_seed: f32 = 4325.00;
-
-u_high_slope_color: glm.vec4 = {0.219, 0.221, 0.199, 1.0}
-u_low_slope_color: glm.vec4 = {0.307, 0.402, 0.262, 1.0}
-u_slope_range: glm.vec2 = {0.740, 0.780}
-u_slope_damping: f32 = 0.045
-u_ambient: glm.vec4 = {0.838, 0.838, 0.838, 1.0}
-
-u_frequency: f32 = 0.012
-u_frequency_variance: glm.vec2 = {-0.35, 0.22}
-u_amplitude: f32 = 100.0
-u_lacunarity: f32 = 3.79
-u_octaves: i32 = 8
+ubo_data: ubo_layout  = {
+    mvp = 0,
+    world_matrix = 0,
+    camera_pos = 0,
+    high_slope_color = {0.219, 0.221, 0.199, 1.0},
+    low_slope_color = {0.307, 0.402, 0.262, 1.0},
+    ambient = {0.838, 0.838, 0.838, 1.0},
+    fog_color = {0.659, 0.647, 0.85, 1.0},
+    frequency_variance = {-0.35, 0.22},
+    slope_range = {0.740, 0.780},
+    slope_damping = 0.045,
+    frequency = 0.012,
+    amplitude = 100.0,
+    lacunarity = 3.79,
+    seed = 4325.00,
+    fog_density = 0.003,
+    octaves = 8,
+}
 
 compile_shaders :: proc() {
     shader, _ = gl.load_shaders("res/vertex.glsl", "res/fragment.glsl")
@@ -58,24 +82,13 @@ compile_shaders :: proc() {
 create_ubo :: proc() {
     gl.GenBuffers(1, &ubo)
     gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
-    gl.BufferData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 5 + size_of(i32), nil, gl.STATIC_DRAW)
+    gl.BufferData(gl.UNIFORM_BUFFER, size_of(ubo_layout), nil, gl.STATIC_DRAW)
     gl.BindBuffer(gl.UNIFORM_BUFFER, 0)
 }
 
 update_ubo :: proc() {
     gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, 0, size_of(glm.mat4), &u_mvp[0, 0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4), size_of(glm.vec4), &u_high_slope_color[0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4), size_of(glm.vec4), &u_low_slope_color[0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 2, size_of(glm.vec4), &u_ambient[0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3, size_of(glm.vec2), &u_slope_range[0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2), size_of(glm.vec2), &u_frequency_variance[0])
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2, size_of(f32), &u_slope_damping)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32), size_of(f32) * 2, &u_frequency)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 2, size_of(f32), &u_amplitude)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 3, size_of(f32), &u_lacunarity)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 4, size_of(f32), &u_seed)
-    gl.BufferSubData(gl.UNIFORM_BUFFER, size_of(glm.mat4) + size_of(glm.vec4) * 3 + size_of(glm.vec2) * 2 + size_of(f32) * 5, size_of(i32), &u_octaves)
+    gl.BufferSubData(gl.UNIFORM_BUFFER, 0, size_of(ubo_layout), &ubo_data)
     gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, ubo)
 }
 
@@ -83,9 +96,11 @@ update_mvp :: proc() {
     projection := glm.mat4Perspective(glm.radians_f32(60.0), f32(window_width)/f32(window_height), 0.01, 1000.0)
     camera_position := glm.vec3{30.0, 20.0, 30.0}
     view := glm.mat4LookAt(camera_position, {0.0, 15.0, 0.0}, {0.0, 1.0, 0.0})
-    model := glm.mat4Translate({0.0, 0.0, 0.0})
+    world := glm.mat4Translate({0.0, 0.0, 0.0})
 
-    u_mvp = projection * view * model
+    ubo_data.camera_pos = camera_position;
+    ubo_data.world_matrix = world;
+    ubo_data.mvp = projection * view * world
 }
 
 gen_terrain_data :: proc() {
@@ -132,8 +147,8 @@ main :: proc() {
         return
     }
 
-    sdl.GL_SetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
-    sdl.GL_SetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 3)
+    sdl.GL_SetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 4)
+    sdl.GL_SetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 6)
     sdl.GL_SetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, cast(i32)sdl.GL_CONTEXT_PROFILE_CORE)
 
     window_handle = sdl.CreateWindow("Dirt Jam", 1280, 720, sdl.WINDOW_OPENGL)
@@ -199,6 +214,7 @@ main :: proc() {
     gl.DeleteVertexArrays(1, &vao)
     gl.DeleteBuffers(1, &vbo)
     gl.DeleteBuffers(1, &ebo)
+    gl.DeleteBuffers(1, &ubo)
     gl.DeleteShader(shader)
 
     delete(vertex_buffer)

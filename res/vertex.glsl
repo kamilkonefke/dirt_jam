@@ -4,16 +4,20 @@ layout(location = 0) in vec3 a_pos;
 
 layout(std140) uniform ubo {
     mat4 u_mvp;
+    mat4 u_world_matrix;
     vec4 u_high_slope_color;
     vec4 u_low_slope_color;
     vec4 u_ambient;
-    vec2 u_slope_range;
+    vec4 u_fog_color;
+    vec3 u_camera_pos;
     vec2 u_frequency_variance;
+    vec2 u_slope_range;
     float u_slope_damping;
     float u_frequency;
     float u_amplitude;
     float u_lacunarity;
     float u_seed;
+    float u_fog_density;
     int u_octaves;
 };
 
@@ -97,6 +101,9 @@ vec3 fbm(in vec2 p) {
 
     for(int i = 0; i < u_octaves; i++) {
         vec3 noise = perlin(p);
+        if (i == 0) {
+            noise = 1.0 - abs(noise);
+        }
 
         height += amplitude * noise.x;
         gradient += amplitude * m * noise.yz;
@@ -111,8 +118,11 @@ vec3 fbm(in vec2 p) {
 
     return vec3(height, gradient);
 }
+
+vec3 offset = vec3(0.0, -60.0, 0.0);
+
 void main() {
     pos = a_pos;
-    gl_Position = u_mvp * vec4(a_pos, 1.0);
+    gl_Position = u_mvp * vec4(a_pos + offset, 1.0);
     gl_Position.y += fbm(a_pos.xz * u_frequency).x;
 }

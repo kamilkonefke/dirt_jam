@@ -4,16 +4,20 @@ layout(location = 0) out vec4 frag_color;
 
 layout(std140) uniform ubo {
     mat4 u_mvp;
+    mat4 u_world_matrix;
     vec4 u_high_slope_color;
     vec4 u_low_slope_color;
     vec4 u_ambient;
-    vec2 u_slope_range;
+    vec4 u_fog_color;
+    vec3 u_camera_pos;
     vec2 u_frequency_variance;
+    vec2 u_slope_range;
     float u_slope_damping;
     float u_frequency;
     float u_amplitude;
     float u_lacunarity;
     float u_seed;
+    float u_fog_density;
     int u_octaves;
 };
 
@@ -91,12 +95,15 @@ vec3 fbm(in vec2 p) {
     mat2 m = mat2(1.0, 0.0, 0.0, 1.0);
 
     mat2 m2 = mat2(cos(0.5), -sin(0.5),
-                    sin(0.5), cos(0.50));
+                    sin(0.5), cos(0.5));
 
     mat2 m2i = inverse(m2);
 
     for(int i = 0; i < u_octaves; i++) {
         vec3 noise = perlin(p);
+        if (i == 0) {
+            noise = 1.0 - abs(noise);
+        }
 
         height += amplitude * noise.x;
         gradient += amplitude * m * noise.yz;
@@ -122,12 +129,17 @@ void main() {
 
     vec4 albedo = mix(u_low_slope_color, u_high_slope_color, blend_factor);
 
-    float diffiuse = clamp(dot(vec3(0.5, 0.0, 1.0), normal), 0.0, 1.0);
+    float diffiuse = clamp(dot(vec3(-1.0, 0.0, 1.0), normal), 0.0, 1.0);
 
     vec4 direct = albedo * diffiuse;
     vec4 ambient = albedo * u_ambient;
 
     vec4 lit = clamp(direct + ambient, vec4(0.0), vec4(1.0));
+
+    // https://www.youtube.com/watch?v=k1zGz55EqfU
+    float distance = length(pos - u_camera_pos);
+    float fog_factor = 1.0 - exp(-u_fog_density * u_fog_density * distance * distance);
+    lit = mix(lit, u_fog_color, fog_factor);
 
     frag_color = lit;
 }
