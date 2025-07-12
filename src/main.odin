@@ -98,8 +98,8 @@ update_mvp :: proc() {
     view := glm.mat4LookAt(camera_position, {0.0, 15.0, 0.0}, {0.0, 1.0, 0.0})
     world := glm.mat4Translate({0.0, 0.0, 0.0})
 
-    ubo_data.camera_pos = camera_position;
-    ubo_data.world_matrix = world;
+    ubo_data.camera_pos = camera_position
+    ubo_data.world_matrix = world
     ubo_data.mvp = projection * view * world
 }
 

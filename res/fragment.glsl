@@ -129,12 +129,17 @@ void main() {
 
     vec4 albedo = mix(u_low_slope_color, u_high_slope_color, blend_factor);
 
-    float diffiuse = clamp(dot(vec3(-1.0, 0.0, 1.0), normal), 0.0, 1.0);
+    vec3 light_dir = vec3(-1.0, 0.0, 1.0);
+    float diffiuse = clamp(dot(light_dir, normal), 0.0, 1.0);
 
+    vec3 specular_reflection = normalize(reflect(-light_dir, slope_normal));
+    float specular_strength = pow(max(0.0, dot(normalize(u_camera_pos), specular_reflection)), 4.0);
+
+    vec4 specular = specular_strength * vec4(0.12);
     vec4 direct = albedo * diffiuse;
     vec4 ambient = albedo * u_ambient;
 
-    vec4 lit = clamp(direct + ambient, vec4(0.0), vec4(1.0));
+    vec4 lit = clamp(direct + specular + ambient, vec4(0.0), vec4(1.0));
 
     // https://www.youtube.com/watch?v=k1zGz55EqfU
     float distance = length(pos - u_camera_pos);
