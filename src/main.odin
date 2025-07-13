@@ -65,9 +65,9 @@ ubo_data: ubo_layout  = {
     world_matrix = 0,
     camera_pos = 0,
     high_slope_color = {0.142, 0.121, 0.108, 1.0},
-    low_slope_color = {0.229, 0.353, 0.221, 1.0},
+    low_slope_color = {0.156, 0.211, 0.153, 1.0},
     ambient = {0.259, 0.306, 0.328, 1.0},
-    fog_color = {0.599, 0.615, 0.74, 1.0},
+    fog_color = {0.543, 0.569, 0.770, 1.0},
     frequency_variance = {-0.29, 0.22},
     slope_range = {0.83, 0.88},
     slope_damping = 0.06,
@@ -75,7 +75,7 @@ ubo_data: ubo_layout  = {
     amplitude = 136.0,
     lacunarity = 3.79,
     seed = 4325.00,
-    fog_density = 0.003,
+    fog_density = 0.002,
     octaves = 8,
 }
 

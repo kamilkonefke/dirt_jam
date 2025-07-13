@@ -133,9 +133,9 @@ void main() {
     float diffiuse = clamp(dot(light_dir, normal), 0.0, 1.0);
 
     vec3 specular_reflection = normalize(reflect(-light_dir, slope_normal));
-    float specular_strength = pow(max(0.0, dot(normalize(u_camera_pos), specular_reflection)), 4.0);
+    float specular_strength = pow(max(0.0, dot(normalize(u_camera_pos), specular_reflection)), 6.0);
 
-    vec4 specular = specular_strength * vec4(0.12);
+    vec4 specular = specular_strength * vec4(0.04);
     vec4 direct = albedo * diffiuse;
     vec4 ambient = albedo * u_ambient;
 
