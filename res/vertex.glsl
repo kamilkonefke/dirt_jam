@@ -119,10 +119,8 @@ vec3 fbm(in vec2 p) {
     return vec3(height, gradient);
 }
 
-vec3 offset = vec3(0.0, -60.0, 0.0);
-
 void main() {
     pos = a_pos;
-    gl_Position = u_mvp * vec4(a_pos + offset, 1.0);
-    gl_Position.y += fbm(a_pos.xz * u_frequency).x;
+    pos.y += fbm(a_pos.xz * u_frequency).x - 100.0;
+    gl_Position = u_mvp * vec4(pos, 1.0);
 }

@@ -18,6 +18,10 @@ window_width: i32 = 1280
 window_height: i32 = 720
 event: sdl.Event
 
+key_down: #sparse[sdl.Scancode]bool
+mouse_down: [2]bool
+mouse_motion: glm.vec2
+
 is_running: bool = true
 is_wireframe: bool = false
 
@@ -35,7 +39,7 @@ terrain_length :: 600
 terrain_half :: terrain_length/2
 terrain_scale :: 1.6
 
-// If something is fucked up then look here. I don't fully understand std140
+// If something is fucked up then look here.
 ubo_layout :: struct {
     mvp: glm.mat4,
     world_matrix: glm.mat4,
@@ -60,15 +64,15 @@ ubo_data: ubo_layout  = {
     mvp = 0,
     world_matrix = 0,
     camera_pos = 0,
-    high_slope_color = {0.219, 0.221, 0.199, 1.0},
-    low_slope_color = {0.307, 0.402, 0.262, 1.0},
-    ambient = {0.838, 0.838, 0.838, 1.0},
-    fog_color = {0.659, 0.647, 0.85, 1.0},
-    frequency_variance = {-0.35, 0.22},
-    slope_range = {0.740, 0.780},
-    slope_damping = 0.045,
-    frequency = 0.012,
-    amplitude = 100.0,
+    high_slope_color = {0.142, 0.121, 0.108, 1.0},
+    low_slope_color = {0.229, 0.353, 0.221, 1.0},
+    ambient = {0.259, 0.306, 0.328, 1.0},
+    fog_color = {0.599, 0.615, 0.74, 1.0},
+    frequency_variance = {-0.29, 0.22},
+    slope_range = {0.83, 0.88},
+    slope_damping = 0.06,
+    frequency = 0.004,
+    amplitude = 136.0,
     lacunarity = 3.79,
     seed = 4325.00,
     fog_density = 0.003,
@@ -90,17 +94,6 @@ update_ubo :: proc() {
     gl.BindBuffer(gl.UNIFORM_BUFFER, ubo)
     gl.BufferSubData(gl.UNIFORM_BUFFER, 0, size_of(ubo_layout), &ubo_data)
     gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, ubo)
-}
-
-update_mvp :: proc() {
-    projection := glm.mat4Perspective(glm.radians_f32(60.0), f32(window_width)/f32(window_height), 0.01, 1000.0)
-    camera_position := glm.vec3{30.0, 20.0, 30.0}
-    view := glm.mat4LookAt(camera_position, {0.0, 15.0, 0.0}, {0.0, 1.0, 0.0})
-    world := glm.mat4Translate({0.0, 0.0, 0.0})
-
-    ubo_data.camera_pos = camera_position
-    ubo_data.world_matrix = world
-    ubo_data.mvp = projection * view * world
 }
 
 gen_terrain_data :: proc() {
@@ -156,7 +149,7 @@ main :: proc() {
     sdl.GL_SetSwapInterval(1)
 
     sdl.GL_MakeCurrent(window_handle, window_ctx)
-    gl.load_up_to(3, 3, sdl.gl_set_proc_address)
+    gl.load_up_to(4, 6, sdl.gl_set_proc_address)
 
     gen_terrain_data()
     alloc_terrain_data()
@@ -166,13 +159,12 @@ main :: proc() {
 
     gl.Enable(gl.DEPTH_TEST)
     for is_running {
+        mouse_motion = {}
         // -_-
         for sdl.PollEvent(&event) {
             im_sdl.process_event(&event)
-            
-            if event.type == sdl.EventType.QUIT {
-                is_running = false
-            }
+
+            if event.type == sdl.EventType.QUIT do is_running = false
 
             if event.type == sdl.EventType.WINDOW_RESIZED {
                 sdl.GetWindowSize(window_handle, &window_width, &window_height)
@@ -180,11 +172,11 @@ main :: proc() {
             }
 
             if event.type == sdl.EventType.KEY_UP {
-                if event.key.scancode == sdl.Scancode.R {
+                key_down[event.key.scancode] = false
+                if event.key.scancode == .R {
                     compile_shaders()
                 }
-
-                if event.key.scancode == sdl.Scancode.W {
+                if event.key.scancode == .E {
                     is_wireframe = !is_wireframe
                     if is_wireframe == true {
                         gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
@@ -194,12 +186,32 @@ main :: proc() {
                     }
                 }
             }
+
+            if event.type == sdl.EventType.KEY_DOWN {
+                key_down[event.key.scancode] = true
+            }
+
+            if event.type == sdl.EventType.MOUSE_BUTTON_DOWN {
+                if event.button.button == sdl.BUTTON_RIGHT {
+                    mouse_down[1] = true
+                }
+            }
+
+            if event.type == sdl.EventType.MOUSE_BUTTON_UP {
+                if event.button.button == sdl.BUTTON_RIGHT {
+                    mouse_down[1] = false
+                }
+            }
+
+            if event.type == sdl.EventType.MOUSE_MOTION {
+                mouse_motion += {event.motion.xrel, event.motion.yrel}
+            }
         }
 
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
         gl.ClearColor(0.659, 0.647, 0.714, 1.0)
 
-        update_mvp()
+        update_camera()
         update_ubo()
 
         gl.UseProgram(shader)
