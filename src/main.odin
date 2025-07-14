@@ -25,12 +25,12 @@ mouse_motion: glm.vec2
 is_running: bool = true
 is_wireframe: bool = false
 
-shader: u32
+terrain_shader: u32
 ubo: u32
 
-vao: u32
-vbo: u32
-ebo: u32
+terrain_vao: u32
+terrain_vbo: u32
+terrain_ebo: u32
 
 vertex_buffer := [dynamic]f32{}
 index_buffer := [dynamic]u32{} 
@@ -49,6 +49,8 @@ ubo_layout :: struct {
     fog_color: glm.vec4,
     camera_pos: glm.vec3,
     _pad0: f32,
+    sun_direction: glm.vec3,
+    _pad1: f32,
     frequency_variance: glm.vec2,
     slope_range: glm.vec2,
     slope_damping: f32,
@@ -58,12 +60,14 @@ ubo_layout :: struct {
     seed: f32,
     fog_density: f32,
     octaves: i32,
+    shadows: bool,
 }
 
 ubo_data: ubo_layout  = {
     mvp = 0,
     world_matrix = 0,
     camera_pos = 0,
+    sun_direction = {-0.5, 0.0, 1.0},
     high_slope_color = {0.142, 0.121, 0.108, 1.0},
     low_slope_color = {0.156, 0.211, 0.153, 1.0},
     ambient = {0.259, 0.306, 0.328, 1.0},
@@ -77,10 +81,11 @@ ubo_data: ubo_layout  = {
     seed = 4325.00,
     fog_density = 0.002,
     octaves = 8,
+    shadows = false,
 }
 
 compile_shaders :: proc() {
-    shader, _ = gl.load_shaders("res/vertex.glsl", "res/fragment.glsl")
+    terrain_shader, _ = gl.load_shaders("res/terrain_vert.glsl", "res/terrain_frag.glsl")
 }
 
 create_ubo :: proc() {
@@ -118,16 +123,16 @@ gen_terrain_data :: proc() {
 }
 
 alloc_terrain_data :: proc() {
-    gl.GenVertexArrays(1, &vao)
-    gl.GenBuffers(1, &vbo)
-    gl.GenBuffers(1, &ebo)
+    gl.GenVertexArrays(1, &terrain_vao)
+    gl.GenBuffers(1, &terrain_vbo)
+    gl.GenBuffers(1, &terrain_ebo)
 
-    gl.BindVertexArray(vao)
+    gl.BindVertexArray(terrain_vao)
 
-    gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+    gl.BindBuffer(gl.ARRAY_BUFFER, terrain_vbo)
     gl.BufferData(gl.ARRAY_BUFFER, len(vertex_buffer) * size_of(f32), raw_data(vertex_buffer), gl.STATIC_DRAW)
 
-    gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+    gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, terrain_ebo)
     gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(index_buffer) * size_of(u32), raw_data(index_buffer), gl.STATIC_DRAW)
 
     gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3 * size_of(f32), 0)
@@ -214,8 +219,8 @@ main :: proc() {
         update_camera()
         update_ubo()
 
-        gl.UseProgram(shader)
-        gl.BindVertexArray(vao)
+        gl.UseProgram(terrain_shader)
+        gl.BindVertexArray(terrain_vao)
         gl.DrawElements(gl.TRIANGLES, i32(len(index_buffer)), gl.UNSIGNED_INT, nil)
 
         update_imgui()
@@ -223,11 +228,11 @@ main :: proc() {
         sdl.GL_SwapWindow(window_handle)
     }
 
-    gl.DeleteVertexArrays(1, &vao)
-    gl.DeleteBuffers(1, &vbo)
-    gl.DeleteBuffers(1, &ebo)
+    gl.DeleteVertexArrays(1, &terrain_vao)
+    gl.DeleteBuffers(1, &terrain_vbo)
+    gl.DeleteBuffers(1, &terrain_ebo)
     gl.DeleteBuffers(1, &ubo)
-    gl.DeleteShader(shader)
+    gl.DeleteShader(terrain_shader)
 
     delete(vertex_buffer)
     delete(index_buffer)

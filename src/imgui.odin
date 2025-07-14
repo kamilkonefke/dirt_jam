@@ -29,7 +29,7 @@ update_imgui :: proc() {
         im.separator()
 
         im.text("R - recompile shaders")
-        im.text("W - toggle wireframe")
+        im.text("E - toggle wireframe")
 
         im.separator()
 
@@ -43,10 +43,17 @@ update_imgui :: proc() {
 
         im.separator()
 
+        im.text_colored({1.0, 0.0, 0.0, 1.0}, "Shadows [Not optimized]")
+        im.checkbox("Enable", &ubo_data.shadows)
+
+        im.separator()
+
         im.text("Colors")
         im.color_edit4("High Slope", &ubo_data.high_slope_color, { .No_Alpha, .Display_Hex })
         im.color_edit4("Low Slope", &ubo_data.low_slope_color, { .No_Alpha, .Display_Hex })
         im.color_edit4("Ambient", &ubo_data.ambient, { .No_Alpha, .Display_Hex})
+
+        im.drag_float3("Sun direction", &ubo_data.sun_direction, 0.01, -1.0, 1.0)
 
         im.drag_float2("Slope range", &ubo_data.slope_range, 0.01)
         im.slider_float("Slope damping", &ubo_data.slope_damping, 0.0, 1.0)

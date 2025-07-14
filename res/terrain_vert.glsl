@@ -10,6 +10,7 @@ layout(std140) uniform ubo {
     vec4 u_ambient;
     vec4 u_fog_color;
     vec3 u_camera_pos;
+    vec3 u_sun_direction;
     vec2 u_frequency_variance;
     vec2 u_slope_range;
     float u_slope_damping;
@@ -19,6 +20,7 @@ layout(std140) uniform ubo {
     float u_seed;
     float u_fog_density;
     int u_octaves;
+    bool u_shadows;
 };
 
 out vec3 pos;

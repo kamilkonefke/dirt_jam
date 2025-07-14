@@ -45,7 +45,7 @@ update_camera :: proc() {
     if mouse_down[1] {
         camera.pitch -= mouse_motion.y * 0.05
         camera.yaw += mouse_motion.x * 0.05
-        camera.pitch = math.clamp(camera.pitch, -90.0, 90.0)
+        camera.pitch = math.clamp(camera.pitch, -89.0, 89.0)
     }
 
     direction: glm.vec3

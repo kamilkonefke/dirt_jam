@@ -10,6 +10,7 @@ layout(std140) uniform ubo {
     vec4 u_ambient;
     vec4 u_fog_color;
     vec3 u_camera_pos;
+    vec3 u_sun_direction;
     vec2 u_frequency_variance;
     vec2 u_slope_range;
     float u_slope_damping;
@@ -19,6 +20,7 @@ layout(std140) uniform ubo {
     float u_seed;
     float u_fog_density;
     int u_octaves;
+    bool u_shadows;
 };
 
 in vec3 pos;
@@ -119,6 +121,21 @@ vec3 fbm(in vec2 p) {
     return vec3(height, gradient);
 }
 
+float shadow(vec3 origin, vec3 sun_dir) {
+    float res = 1.0;
+    float t = 0.02;
+    for(int i = 0; i < 32; i++) {
+        vec3 pos = origin + sun_dir * t;
+        float env = fbm(pos.xz * u_frequency).x;
+        float height = pos.y - env;
+        res = min(res, 32.0 * height / t);
+        if(res < 0.0005 || pos.y > 400.0) break;
+        t += clamp(height, 0.5+t*0.05, 25.0);
+    }
+
+    return clamp(res, 0.1, 1.0);
+}
+
 void main() {
     vec3 noise = fbm(pos.xz * u_frequency);
 
@@ -129,14 +146,18 @@ void main() {
 
     vec4 albedo = mix(u_low_slope_color, u_high_slope_color, blend_factor);
 
-    vec3 light_dir = vec3(-1.0, 0.0, 1.0);
-    float diffiuse = clamp(dot(light_dir, normal), 0.0, 1.0);
+    float diffuse = clamp(dot(u_sun_direction, normal), 0.0, 1.0);
 
-    vec3 specular_reflection = normalize(reflect(-light_dir, slope_normal));
+    if (u_shadows) {
+        float shadow_factor = shadow(vec3(pos.x, noise.x, pos.z) + vec3(0.0, 5.0, 0.0), u_sun_direction);
+        diffuse *= shadow_factor;
+    }
+
+    vec3 specular_reflection = normalize(reflect(-u_sun_direction, slope_normal));
     float specular_strength = pow(max(0.0, dot(normalize(u_camera_pos), specular_reflection)), 6.0);
 
     vec4 specular = specular_strength * vec4(0.04);
-    vec4 direct = albedo * diffiuse;
+    vec4 direct = albedo * diffuse;
     vec4 ambient = albedo * u_ambient;
 
     vec4 lit = clamp(direct + specular + ambient, vec4(0.0), vec4(1.0));
