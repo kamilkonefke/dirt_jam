@@ -60,7 +60,8 @@ update_camera :: proc() {
     world := glm.mat4Translate({0.0, 0.0, 0.0})
 
     ubo_data.camera_pos = camera.position
-    ubo_data.world_matrix = world
-    ubo_data.mvp = projection * view * world
+    ubo_data.world = world
+    ubo_data.projection = projection
+    ubo_data.view = view
 }
 

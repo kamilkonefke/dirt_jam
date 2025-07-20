@@ -26,14 +26,45 @@ is_running: bool = true
 is_wireframe: bool = false
 
 terrain_shader: u32
+sky_shader: u32
 ubo: u32
 
 terrain_vao: u32
 terrain_vbo: u32
 terrain_ebo: u32
 
-vertex_buffer := [dynamic]f32{}
-index_buffer := [dynamic]u32{} 
+sky_vao: u32
+sky_vbo: u32
+sky_ebo: u32
+
+terrain_vertex_data := [dynamic]f32{}
+terrain_index_data := [dynamic]u32{} 
+
+sky_vertex_data := []f32{
+    -1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0,  1.0, -1.0,
+    -1.0,  1.0, -1.0,
+    -1.0, -1.0,  1.0,
+     1.0, -1.0,  1.0,
+     1.0,  1.0,  1.0,
+    -1.0,  1.0,  1.0,
+}
+
+sky_index_data := []u32{
+    0, 1, 2,
+    2, 3, 0,
+    4, 0, 3,
+    3, 7, 4,
+    1, 5, 6,
+    6, 2, 1,
+    5, 4, 7,
+    7, 6, 5,
+    3, 2, 6,
+    6, 7, 3,
+    4, 5, 1,
+    1, 0, 4,
+}
 
 terrain_length :: 600
 terrain_half :: terrain_length/2
@@ -41,12 +72,15 @@ terrain_scale :: 1.6
 
 // If something is fucked up then look here.
 ubo_layout :: struct {
-    mvp: glm.mat4,
-    world_matrix: glm.mat4,
+    projection: glm.mat4,
+    view: glm.mat4,
+    world: glm.mat4,
     high_slope_color: glm.vec4,
     low_slope_color: glm.vec4,
     ambient: glm.vec4,
     fog_color: glm.vec4,
+    sky_color: glm.vec4,
+    sun_color: glm.vec4,
     camera_pos: glm.vec3,
     _pad0: f32,
     sun_direction: glm.vec3,
@@ -64,14 +98,17 @@ ubo_layout :: struct {
 }
 
 ubo_data: ubo_layout  = {
-    mvp = 0,
-    world_matrix = 0,
+    projection = 0,
+    view = 0,
+    world = 0,
     camera_pos = 0,
     sun_direction = {-0.5, 0.0, 1.0},
     high_slope_color = {0.142, 0.121, 0.108, 1.0},
     low_slope_color = {0.156, 0.211, 0.153, 1.0},
     ambient = {0.259, 0.306, 0.328, 1.0},
     fog_color = {0.543, 0.569, 0.770, 1.0},
+    sky_color = {0.659, 0.647, 0.714, 1.0},
+    sun_color = {0.659, 0.647, 0.714, 1.0},
     frequency_variance = {-0.29, 0.22},
     slope_range = {0.83, 0.88},
     slope_damping = 0.06,
@@ -86,6 +123,7 @@ ubo_data: ubo_layout  = {
 
 compile_shaders :: proc() {
     terrain_shader, _ = gl.load_shaders("res/terrain_vert.glsl", "res/terrain_frag.glsl")
+    sky_shader, _ = gl.load_shaders("res/sky_vert.glsl", "res/sky_frag.glsl")
 }
 
 create_ubo :: proc() {
@@ -106,7 +144,7 @@ gen_terrain_data :: proc() {
         for z in 0..<terrain_length {
             xz: glm.vec2 = {f32(x - terrain_half), f32(z - terrain_half)} * terrain_scale
             pos: glm.vec3 = {xz.x, 0, xz.y}
-            append(&vertex_buffer, pos.x, pos.y, pos.z)
+            append(&terrain_vertex_data, pos.x, pos.y, pos.z)
         }
     }
 
@@ -117,9 +155,26 @@ gen_terrain_data :: proc() {
             v2 := v0 + terrain_length + 1
             v3 := v0 + 1
 
-            append(&index_buffer, u32(v0), u32(v1), u32(v3), u32(v1), u32(v2), u32(v3))
+            append(&terrain_index_data, u32(v0), u32(v1), u32(v3), u32(v1), u32(v2), u32(v3))
         }
     }
+}
+
+alloc_sky_data :: proc() {
+    gl.GenVertexArrays(1, &sky_vao)
+    gl.GenBuffers(1, &sky_vbo)
+    gl.GenBuffers(1, &sky_ebo)
+
+    gl.BindVertexArray(sky_vao)
+
+    gl.BindBuffer(gl.ARRAY_BUFFER, sky_vbo)
+    gl.BufferData(gl.ARRAY_BUFFER, len(sky_vertex_data) * size_of(f32), raw_data(sky_vertex_data), gl.STATIC_DRAW)
+
+    gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, sky_ebo)
+    gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(sky_index_data) * size_of(u32), raw_data(sky_index_data), gl.STATIC_DRAW)
+
+    gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3 * size_of(f32), 0)
+    gl.EnableVertexAttribArray(0)
 }
 
 alloc_terrain_data :: proc() {
@@ -130,10 +185,10 @@ alloc_terrain_data :: proc() {
     gl.BindVertexArray(terrain_vao)
 
     gl.BindBuffer(gl.ARRAY_BUFFER, terrain_vbo)
-    gl.BufferData(gl.ARRAY_BUFFER, len(vertex_buffer) * size_of(f32), raw_data(vertex_buffer), gl.STATIC_DRAW)
+    gl.BufferData(gl.ARRAY_BUFFER, len(terrain_vertex_data) * size_of(f32), raw_data(terrain_vertex_data), gl.STATIC_DRAW)
 
     gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, terrain_ebo)
-    gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(index_buffer) * size_of(u32), raw_data(index_buffer), gl.STATIC_DRAW)
+    gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(terrain_index_data) * size_of(u32), raw_data(terrain_index_data), gl.STATIC_DRAW)
 
     gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3 * size_of(f32), 0)
     gl.EnableVertexAttribArray(0)
@@ -158,6 +213,7 @@ main :: proc() {
 
     gen_terrain_data()
     alloc_terrain_data()
+    alloc_sky_data()
     compile_shaders()
     create_ubo()
     setup_imgui()
@@ -214,14 +270,27 @@ main :: proc() {
         }
 
         gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.ClearColor(0.659, 0.647, 0.714, 1.0)
+        gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
         update_camera()
         update_ubo()
 
+        gl.DepthFunc(gl.LESS)
         gl.UseProgram(terrain_shader)
         gl.BindVertexArray(terrain_vao)
-        gl.DrawElements(gl.TRIANGLES, i32(len(index_buffer)), gl.UNSIGNED_INT, nil)
+        gl.DrawElements(gl.TRIANGLES, i32(len(terrain_index_data)), gl.UNSIGNED_INT, nil)
+
+        gl.DepthFunc(gl.LEQUAL)
+
+        ubo_data.view[0, 3] = 0
+        ubo_data.view[1, 3] = 0
+        ubo_data.view[2, 3] = 0
+        ubo_data.view[3, 3] = 0
+
+        update_ubo()
+        gl.UseProgram(sky_shader)
+        gl.BindVertexArray(sky_vao)
+        gl.DrawElements(gl.TRIANGLES, i32(len(sky_index_data)), gl.UNSIGNED_INT, nil)
 
         update_imgui()
 
@@ -231,11 +300,16 @@ main :: proc() {
     gl.DeleteVertexArrays(1, &terrain_vao)
     gl.DeleteBuffers(1, &terrain_vbo)
     gl.DeleteBuffers(1, &terrain_ebo)
+
+    gl.DeleteVertexArrays(1, &sky_vao)
+    gl.DeleteBuffers(1, &sky_vbo)
+    gl.DeleteBuffers(1, &sky_ebo)
+
     gl.DeleteBuffers(1, &ubo)
     gl.DeleteShader(terrain_shader)
 
-    delete(vertex_buffer)
-    delete(index_buffer)
+    delete(terrain_vertex_data)
+    delete(terrain_index_data)
 
     free_imgui()
 

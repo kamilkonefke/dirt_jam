@@ -3,12 +3,15 @@
 layout(location = 0) out vec4 frag_color;
 
 layout(std140) uniform ubo {
-    mat4 u_mvp;
-    mat4 u_world_matrix;
+    mat4 u_projection;
+    mat4 u_view;
+    mat4 u_world;
     vec4 u_high_slope_color;
     vec4 u_low_slope_color;
     vec4 u_ambient;
     vec4 u_fog_color;
+    vec4 u_sky_color;
+    vec4 u_sun_color;
     vec3 u_camera_pos;
     vec3 u_sun_direction;
     vec2 u_frequency_variance;

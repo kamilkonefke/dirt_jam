@@ -52,6 +52,8 @@ update_imgui :: proc() {
         im.color_edit4("High Slope", &ubo_data.high_slope_color, { .No_Alpha, .Display_Hex })
         im.color_edit4("Low Slope", &ubo_data.low_slope_color, { .No_Alpha, .Display_Hex })
         im.color_edit4("Ambient", &ubo_data.ambient, { .No_Alpha, .Display_Hex})
+        im.color_edit4("Sky", &ubo_data.sky_color, { .No_Alpha, .Display_Hex})
+        im.color_edit4("Sun", &ubo_data.sun_color, { .No_Alpha, .Display_Hex})
 
         im.drag_float3("Sun direction", &ubo_data.sun_direction, 0.01, -1.0, 1.0)
 
