@@ -22,11 +22,15 @@ layout(std140) uniform ubo {
     float u_lacunarity;
     float u_seed;
     float u_fog_density;
+    float u_sun_size;
     int u_octaves;
     bool u_shadows;
 };
 
+out vec3 pos;
+
 void main() {
-    vec4 pos = u_projection * u_view * vec4(a_pos, 1.0);
-    gl_Position = vec4(pos.x, pos.y, pos.w, pos.w);
+    vec4 pos0 = u_projection * u_view * vec4(a_pos, 1.0);
+    pos = a_pos;
+    gl_Position = vec4(pos0.x, pos0.y, pos0.w, pos0.w);
 }

@@ -3,6 +3,7 @@ package main
 
 import "core:fmt"
 import "core:c"
+import math "core:math"
 import "base:runtime"
 import glm "core:math/linalg/glsl"
 import sdl "vendor:sdl3"
@@ -93,6 +94,7 @@ ubo_layout :: struct {
     lacunarity: f32,
     seed: f32,
     fog_density: f32,
+    sun_size: f32,
     octaves: i32,
     shadows: bool,
 }
@@ -109,6 +111,7 @@ ubo_data: ubo_layout  = {
     fog_color = {0.543, 0.569, 0.770, 1.0},
     sky_color = {0.659, 0.647, 0.714, 1.0},
     sun_color = {0.659, 0.647, 0.714, 1.0},
+    sun_size = 0.1,
     frequency_variance = {-0.29, 0.22},
     slope_range = {0.83, 0.88},
     slope_damping = 0.06,
@@ -139,7 +142,7 @@ update_ubo :: proc() {
     gl.BindBufferBase(gl.UNIFORM_BUFFER, 0, ubo)
 }
 
-gen_terrain_data :: proc() {
+gen_terrain_geometry_data :: proc() {
     for x in 0..<terrain_length {
         for z in 0..<terrain_length {
             xz: glm.vec2 = {f32(x - terrain_half), f32(z - terrain_half)} * terrain_scale
@@ -211,7 +214,7 @@ main :: proc() {
     sdl.GL_MakeCurrent(window_handle, window_ctx)
     gl.load_up_to(4, 6, sdl.gl_set_proc_address)
 
-    gen_terrain_data()
+    gen_terrain_geometry_data()
     alloc_terrain_data()
     alloc_sky_data()
     compile_shaders()

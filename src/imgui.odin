@@ -54,6 +54,7 @@ update_imgui :: proc() {
         im.color_edit4("Ambient", &ubo_data.ambient, { .No_Alpha, .Display_Hex})
         im.color_edit4("Sky", &ubo_data.sky_color, { .No_Alpha, .Display_Hex})
         im.color_edit4("Sun", &ubo_data.sun_color, { .No_Alpha, .Display_Hex})
+        im.drag_float("Sun size", &ubo_data.sun_size, 0.01, 0.0, 1.0)
 
         im.drag_float3("Sun direction", &ubo_data.sun_direction, 0.01, -1.0, 1.0)
 

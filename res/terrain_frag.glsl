@@ -22,6 +22,7 @@ layout(std140) uniform ubo {
     float u_lacunarity;
     float u_seed;
     float u_fog_density;
+    float u_sun_size;
     int u_octaves;
     bool u_shadows;
 };

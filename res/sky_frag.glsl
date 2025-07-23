@@ -22,10 +22,20 @@ layout(std140) uniform ubo {
     float u_lacunarity;
     float u_seed;
     float u_fog_density;
+    float u_sun_size;
     int u_octaves;
     bool u_shadows;
 };
 
+in vec3 pos;
+
 void main() {
-    frag_color = u_sky_color;
+    vec3 n_pos = normalize(pos);
+    vec3 ns_dir = normalize(u_sun_direction);
+
+    // Replace this with smoothstep()
+    vec4 sun_mask = step(u_sun_size, mix(vec4(0.0), vec4(1.0), length(n_pos - ns_dir)));
+
+    vec4 lit = mix(u_sun_color, u_sky_color, sun_mask);
+    frag_color = lit;
 }
