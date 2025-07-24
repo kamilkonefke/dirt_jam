@@ -34,7 +34,7 @@ void main() {
     vec3 ns_dir = normalize(u_sun_direction);
 
     // Replace this with smoothstep()
-    vec4 sun_mask = step(u_sun_size, mix(vec4(0.0), vec4(1.0), length(n_pos - ns_dir)));
+    vec4 sun_mask = smoothstep(u_sun_size, u_sun_size + 0.6, mix(vec4(0.0), vec4(1.0), length(n_pos - ns_dir)));
 
     vec4 lit = mix(u_sun_color, u_sky_color, sun_mask);
     frag_color = lit;
